@@ -1,0 +1,52 @@
+# public/admin/config.yml
+backend:
+  name: git-gateway
+  branch: main
+
+local_backend: true
+
+media_folder: "public/uploads"
+public_folder: "/uploads"
+
+collections:
+  # COLLECTION 1: THE PRINT CATALOG
+  - name: "zines"
+    label: "Zine Catalog"
+    folder: "src/content/zines"
+    create: true
+    slug: "{{catalog_number}}-{{slug}}"
+    editor:
+      preview: false
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Catalog Number", name: "catalog_number", widget: "string", hint: "e.g., KNTC-001" }
+      - { label: "Release Date", name: "date", widget: "datetime", format: "YYYY-MM-DD" }
+      - { label: "Cover Image", name: "image", widget: "image" }
+      - { label: "Print Specifications", name: "specs", widget: "string", hint: "e.g., 64 pages, 3-color Riso, perfect bound" }
+      - { 
+          label: "Availability Status", 
+          name: "status", 
+          widget: "select", 
+          options: ["AVAILABLE", "LOW STOCK", "OUT OF PRINT"],
+          default: "AVAILABLE"
+        }
+      - {
+          label: "Featured Contributors",
+          name: "contributors",
+          widget: "list",
+          field: { label: "Artist/Writer Name", name: "name", widget: "string" }
+        }
+      - { label: "Body Text / Project Manifest", name: "body", widget: "markdown", required: false }
+
+  # COLLECTION 2: GLOBAL RETAIL STOCKISTS
+  - name: "stockists"
+    label: "Global Stockists"
+    folder: "src/content/stockists"
+    create: true
+    slug: "{{city}}-{{slug}}"
+    editor:
+      preview: false
+    fields:
+      - { label: "Bookstore Name", name: "name", widget: "string" }
+      - { label: "City & Country Code", name: "city", widget: "string", hint: "e.g., Tokyo, JP or Dublin, IE" }
+      - { label: "Store Website URL", name: "url", widget: "string" }

@@ -1,0 +1,449 @@
+---
+// KINETIC PRINT LAB — RETAIL DISTRIBUTION INDEX
+// src/pages/stockists.astro
+
+import { getCollection } from "astro:content";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import Marquee from "../components/Marquee.astro";
+
+const allStockists = await getCollection("stockists");
+
+// Group by region (first part of city string before the comma)
+const grouped = allStockists.reduce((acc, stockist) => {
+  const region = stockist.data.city.split(",")[1]?.trim() ?? "OTHER";
+  if (!acc[region]) acc[region] = [];
+  acc[region].push(stockist);
+  return acc;
+}, {} as Record<string, typeof allStockists>);
+
+const sortedRegions = Object.keys(grouped).sort();
+const totalStockists = allStockists.length;
+
+const marqueeItems = [
+  "GLOBAL DISTRIBUTION CHANNELS",
+  "PHYSICAL STOCKISTS ONLY",
+  `${totalStockists} ACTIVE CARRIERS`,
+  "INDEPENDENT BOOKSHOPS WORLDWIDE",
+  "NO DIGITAL STOREFRONTS",
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STOCKISTS — KINETIC PRINT LAB</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── RESET & BASE ─────────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --ink-black:   #0a0a0a;
+      --paper:       #f0ece3;
+      --fluro-pink:  #ff3c96;
+      --toxic-green: #b8ff00;
+      --border:      6px solid var(--ink-black);
+      --border-thin: 3px solid var(--ink-black);
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-mono:    'JetBrains Mono', monospace;
+    }
+
+    html {
+      background: var(--ink-black);
+      color: var(--paper);
+      font-family: var(--font-mono);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      border: var(--border);
+    }
+
+    /* ── PAGE HEADER ──────────────────────────────────────── */
+    .page-header {
+      padding: 2.5rem 1.5rem 2rem;
+      border-bottom: var(--border);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: clamp(3.5rem, 10vw, 8rem);
+      line-height: 0.9;
+      letter-spacing: 0.01em;
+    }
+
+    .page-subtitle {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.4;
+      margin-bottom: 0.6rem;
+    }
+
+    .carrier-count {
+      font-family: var(--font-display);
+      font-size: clamp(1rem, 2vw, 1.4rem);
+      opacity: 0.3;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── MAIN CONTENT ─────────────────────────────────────── */
+    main {
+      flex: 1;
+    }
+
+    /* ── REGION GROUP ─────────────────────────────────────── */
+    .region-group {
+      border-bottom: var(--border);
+    }
+
+    .region-header {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      border-bottom: 3px solid rgba(240, 236, 227, 0.1);
+      background: rgba(240, 236, 227, 0.03);
+    }
+
+    .region-label {
+      padding: 0.75rem 1.5rem;
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      letter-spacing: 0.08em;
+      border-right: var(--border);
+      display: flex;
+      align-items: center;
+    }
+
+    .region-count {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.35;
+      display: flex;
+      align-items: center;
+    }
+
+    /* ── STOCKIST ROW ─────────────────────────────────────── */
+    .stockist-row {
+      display: grid;
+      grid-template-columns: 220px 1fr 160px;
+      border-bottom: 2px solid rgba(240, 236, 227, 0.07);
+      text-decoration: none;
+      color: var(--paper);
+      transition: background 0.1s;
+      position: relative;
+    }
+
+    .stockist-row:last-child {
+      border-bottom: none;
+    }
+
+    .stockist-row:hover {
+      background: var(--paper);
+      color: var(--ink-black);
+    }
+
+    .stockist-row:hover .row-status {
+      color: var(--ink-black);
+      border-left-color: var(--ink-black);
+    }
+
+    .stockist-row:hover .row-city {
+      border-right-color: var(--ink-black);
+    }
+
+    .row-city {
+      padding: 1.1rem 1.5rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border-right: var(--border);
+      display: flex;
+      align-items: center;
+      transition: border-color 0.1s;
+    }
+
+    .row-name {
+      padding: 1.1rem 1.5rem;
+      font-family: var(--font-display);
+      font-size: clamp(1.1rem, 2vw, 1.5rem);
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .row-name-text {
+      flex: 1;
+    }
+
+    .row-arrow {
+      opacity: 0;
+      transition: opacity 0.1s, transform 0.1s;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .stockist-row:hover .row-arrow {
+      opacity: 1;
+      transform: translateX(4px);
+    }
+
+    .row-status {
+      padding: 1.1rem 1.5rem;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border-left: var(--border);
+      display: flex;
+      align-items: center;
+      color: var(--toxic-green);
+      transition: color 0.1s, border-color 0.1s;
+    }
+
+    .status-bracket {
+      opacity: 0.4;
+    }
+
+    /* ── FOOTNOTE ─────────────────────────────────────────── */
+    .footnote {
+      padding: 3rem 1.5rem;
+      border-top: var(--border);
+      background: var(--paper);
+      color: var(--ink-black);
+      display: flex;
+      align-items: flex-start;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .footnote-marker {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      line-height: 1;
+      opacity: 0.15;
+      flex-shrink: 0;
+    }
+
+    .footnote-text {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1.7;
+      max-width: 60ch;
+    }
+
+    .footnote-cta {
+      margin-top: 1rem;
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-black);
+      text-decoration: none;
+      border-bottom: 2px solid var(--ink-black);
+      padding-bottom: 2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .footnote-cta:hover {
+      color: var(--fluro-pink);
+      border-color: var(--fluro-pink);
+    }
+
+    /* ── EMPTY STATE ──────────────────────────────────────── */
+    .empty-state {
+      padding: 6rem 1.5rem;
+      text-align: center;
+    }
+
+    .empty-title {
+      font-family: var(--font-display);
+      font-size: 4rem;
+      opacity: 0.15;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-sub {
+      font-size: 0.7rem;
+      opacity: 0.3;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── MOBILE ───────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      :root {
+        --border: 3px solid var(--ink-black);
+      }
+
+      body {
+        border-width: 3px;
+      }
+
+      .page-header {
+        padding: 1.5rem 1rem 1.25rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .region-header {
+        grid-template-columns: 80px 1fr;
+      }
+
+      .region-label {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+      }
+
+      .region-count {
+        padding: 0.6rem 1rem;
+      }
+
+      .stockist-row {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+      }
+
+      .row-city {
+        border-right: none;
+        border-bottom: 1px solid rgba(240, 236, 227, 0.1);
+        padding: 0.6rem 1rem;
+        font-size: 0.6rem;
+      }
+
+      .row-name {
+        padding: 0.75rem 1rem;
+        font-size: 1.1rem;
+        border-bottom: 1px solid rgba(240, 236, 227, 0.1);
+      }
+
+      .row-status {
+        border-left: none;
+        border-top: none;
+        padding: 0.5rem 1rem;
+        font-size: 0.55rem;
+      }
+
+      .stockist-row:hover .row-city {
+        border-right: none;
+      }
+
+      .footnote {
+        padding: 2rem 1rem;
+        gap: 1rem;
+      }
+
+      .footnote-marker {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <Nav currentPath={currentPath} />
+
+  <!-- MARQUEE -->
+  <Marquee items={marqueeItems} speed={28} />
+
+  <!-- PAGE HEADER -->
+  <header class="page-header">
+    <div>
+      <p class="page-subtitle">Retail Distribution Index</p>
+      <h1 class="page-title">STOCKISTS</h1>
+    </div>
+    <span class="carrier-count">{totalStockists} ACTIVE CARRIERS</span>
+  </header>
+
+  <!-- STOCKIST DIRECTORY -->
+  <main>
+    {sortedRegions.length > 0 ? (
+      sortedRegions.map(region => (
+        <div class="region-group">
+          <div class="region-header">
+            <span class="region-label">{region}</span>
+            <span class="region-count">
+              {grouped[region].length} {grouped[region].length === 1 ? "CARRIER" : "CARRIERS"}
+            </span>
+          </div>
+
+          {grouped[region].map(stockist => (
+            <a
+              href={stockist.data.url}
+              class="stockist-row"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${stockist.data.name} in ${stockist.data.city} — opens external site`}
+            >
+              <span class="row-city">{stockist.data.city}</span>
+              <span class="row-name">
+                <span class="row-name-text">{stockist.data.name}</span>
+                <span class="row-arrow" aria-hidden="true">↗</span>
+              </span>
+              <span class="row-status">
+                <span class="status-bracket">[ </span>
+                ACTIVE CARRIER
+                <span class="status-bracket"> ]</span>
+              </span>
+            </a>
+          ))}
+        </div>
+      ))
+    ) : (
+      <div class="empty-state">
+        <p class="empty-title">NO CARRIERS LISTED</p>
+        <p class="empty-sub">Stockist data not yet loaded</p>
+      </div>
+    )}
+  </main>
+
+  <!-- FOOTNOTE -->
+  <div class="footnote">
+    <span class="footnote-marker" aria-hidden="true">*</span>
+    <div>
+      <p class="footnote-text">
+        IF YOU OPERATE AN INDEPENDENT BOOKSTORE AND WISH TO CARRY KINETIC
+        PUBLICATIONS, SEND A TRANSMISSION REQUEST VIA THE CONTACT TERMINAL.
+        DO NOT COLD CALL.
+      </p>
+      <a href="/contact" class="footnote-cta">OPEN CONTACT TERMINAL →</a>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <Footer />
+
+</body>
+</html>

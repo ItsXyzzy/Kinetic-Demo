@@ -1,0 +1,96 @@
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+  <span class="toggle-icon" aria-hidden="true">◐</span>
+  <span class="toggle-text">INK</span>
+</button>
+
+<style is:global>
+  :root {
+    --ink-black:   #0a0a0a;
+    --paper:       #f0ece3;
+    --fluro-pink:  #ff3c96;
+    --toxic-green: #b8ff00;
+    --border-color: var(--ink-black);
+
+    color-scheme: dark;
+  }
+
+  :root.safe-light {
+    --ink-black:   #f0ece3;
+    --paper:       #0a0a0a;
+    --fluro-pink:  #cc0000;
+    --toxic-green: #006600;
+    --border-color: #0a0a0a;
+
+    color-scheme: light;
+  }
+
+  /* Smooth transition on theme swap */
+  html {
+    transition: background 0.2s, color 0.2s;
+  }
+</style>
+
+<style>
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: transparent;
+    border: var(--border-thin);
+    color: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.7rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .theme-toggle:hover {
+    background: var(--paper);
+    color: var(--ink-black);
+  }
+
+  .toggle-icon {
+    font-size: 0.9rem;
+    line-height: 1;
+    transition: transform 0.3s ease;
+  }
+
+  .theme-toggle:hover .toggle-icon {
+    transform: rotate(180deg);
+  }
+
+  /* In light mode, icon flips to show filled side */
+  :global(:root.safe-light) .toggle-icon {
+    content: '◑';
+    transform: rotate(180deg);
+  }
+</style>
+
+<script>
+  const btn      = document.getElementById('theme-toggle') as HTMLButtonElement;
+  const html     = document.documentElement;
+  const iconSpan = btn?.querySelector('.toggle-icon') as HTMLElement;
+  const textSpan = btn?.querySelector('.toggle-text') as HTMLElement;
+
+  function applyTheme(isLight: boolean) {
+    html.classList.toggle('safe-light', isLight);
+    if (iconSpan) iconSpan.textContent = isLight ? '◑' : '◐';
+    if (textSpan) textSpan.textContent = isLight ? 'LIGHT' : 'INK';
+    btn?.setAttribute('aria-label', isLight ? 'Switch to ink mode' : 'Switch to safe-light mode');
+  }
+
+  // Persist across pages
+  const stored = localStorage.getItem('kinetic-theme');
+  if (stored === 'safe-light') applyTheme(true);
+
+  btn?.addEventListener('click', () => {
+    const isLight = !html.classList.contains('safe-light');
+    localStorage.setItem('kinetic-theme', isLight ? 'safe-light' : 'ink');
+    applyTheme(isLight);
+  });
+</script>

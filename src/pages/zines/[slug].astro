@@ -1,0 +1,589 @@
+---
+// KINETIC PRINT LAB — INDIVIDUAL ZINE PAGE
+// src/pages/zines/[slug].astro
+
+import { getCollection, getEntry } from "astro:content";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import Marquee from "../../components/Marquee.astro";
+
+export async function getStaticPaths() {
+  const zines = await getCollection("zines");
+  return zines.map(zine => ({
+    params: { slug: zine.id },
+    props:  { zine },
+  }));
+}
+
+const { zine } = Astro.props;
+const { data }  = zine;
+
+const {
+  title,
+  catalog_number,
+  date,
+  image,
+  specs,
+  status,
+  contributors,
+} = data;
+const contributorNames = contributors.map(c => c.name);
+const isOutOfPrint = status === "OUT OF PRINT";
+const isLowStock   = status === "LOW STOCK";
+const isAvailable  = status === "AVAILABLE";
+
+const formattedDate = new Date(date).toLocaleDateString("en-IE", {
+  year:  "numeric",
+  month: "long",
+  day:   "numeric",
+});
+
+// Contributor marquee: use marquee if 5+, static row if fewer
+const useMarquee = contributors.length >= 5;
+
+const currentPath = Astro.url.pathname;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title} — KINETIC PRINT LAB</title>
+  <meta name="description" content={`${title} — ${specs}. ${status}.`} />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── RESET & BASE ─────────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --ink-black:   #0a0a0a;
+      --paper:       #f0ece3;
+      --fluro-pink:  #ff3c96;
+      --toxic-green: #b8ff00;
+      --border:      6px solid var(--ink-black);
+      --border-thin: 3px solid var(--ink-black);
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-mono:    'JetBrains Mono', monospace;
+    }
+
+    html {
+      background: var(--ink-black);
+      color: var(--paper);
+      font-family: var(--font-mono);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      border: var(--border);
+    }
+
+    /* ── BREADCRUMB ───────────────────────────────────────── */
+    .breadcrumb {
+      padding: 0.75rem 1.5rem;
+      border-bottom: var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .breadcrumb a {
+      color: var(--paper);
+      text-decoration: none;
+      opacity: 0.4;
+      transition: opacity 0.15s;
+    }
+
+    .breadcrumb a:hover {
+      opacity: 1;
+    }
+
+    .breadcrumb-sep {
+      opacity: 0.2;
+    }
+
+    .breadcrumb-current {
+      opacity: 0.8;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 40ch;
+    }
+
+    /* ── PAGE HERO ────────────────────────────────────────── */
+    .page-hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: var(--border);
+      min-height: 70vh;
+    }
+
+    /* ── LEFT: IMAGE ──────────────────────────────────────── */
+    .hero-image-wrap {
+      position: relative;
+      border-right: var(--border);
+      overflow: hidden;
+      background: #111;
+    }
+
+    .hero-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.6s ease;
+    }
+
+    .hero-image-wrap:hover .hero-image {
+      transform: scale(1.02);
+    }
+
+    /* Out of print image treatment */
+    .hero-image-wrap.oop .hero-image {
+      filter: grayscale(1);
+      opacity: 0.4;
+    }
+
+    /* SOLD OUT diagonal stamp */
+    .sold-out-stamp {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .sold-out-text {
+      font-family: var(--font-display);
+      font-size: clamp(4rem, 10vw, 8rem);
+      color: var(--paper);
+      transform: rotate(-28deg);
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      -webkit-text-stroke: 3px var(--paper);
+      paint-order: stroke fill;
+      opacity: 0.9;
+    }
+
+    /* ── RIGHT: META ──────────────────────────────────────── */
+    .hero-meta {
+      display: flex;
+      flex-direction: column;
+      padding: 2.5rem 1.5rem;
+      gap: 0;
+    }
+
+    .meta-top {
+      padding-bottom: 1.5rem;
+      border-bottom: var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    .catalog-number {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.35;
+      margin-bottom: 0.6rem;
+      display: block;
+    }
+
+    .zine-title {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 6vw, 6.5rem);
+      line-height: 0.92;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    /* ── STATUS BADGE ─────────────────────────────────────── */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.3em 0.7em;
+    }
+
+    .status-badge.available {
+      background: var(--toxic-green);
+      color: var(--ink-black);
+    }
+
+    .status-badge.low-stock {
+      background: #ffcc00;
+      color: var(--ink-black);
+    }
+
+    .status-badge.out-of-print {
+      border: 2px solid rgba(240, 236, 227, 0.2);
+      color: var(--paper);
+      opacity: 0.5;
+    }
+
+    /* ── SPEC TABLE ───────────────────────────────────────── */
+    .spec-table {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      flex: 1;
+    }
+
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid rgba(240, 236, 227, 0.08);
+    }
+
+    .spec-row:last-child {
+      border-bottom: none;
+    }
+
+    .spec-key {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      opacity: 0.35;
+      flex-shrink: 0;
+    }
+
+    .spec-val {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-align: right;
+      text-transform: uppercase;
+    }
+
+    /* ── CTA BLOCK ────────────────────────────────────────── */
+    .cta-block {
+      margin-top: auto;
+      padding-top: 1.5rem;
+      border-top: var(--border);
+    }
+
+    .cta-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 1rem 1.25rem;
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+      letter-spacing: 0.04em;
+      background: var(--paper);
+      color: var(--ink-black);
+      border: var(--border);
+      cursor: pointer;
+      text-decoration: none;
+      gap: 1rem;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .cta-btn:hover:not(:disabled) {
+      background: var(--toxic-green);
+      border-color: var(--toxic-green);
+    }
+
+    .cta-btn:hover:not(:disabled) .cta-arrow {
+      transform: translateX(6px);
+    }
+
+    .cta-btn.oop {
+      opacity: 0.3;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .cta-arrow {
+      display: inline-block;
+      transition: transform 0.15s;
+      flex-shrink: 0;
+    }
+
+    .notify-link {
+      display: block;
+      text-align: center;
+      margin-top: 0.75rem;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--paper);
+      text-decoration: none;
+      opacity: 0.35;
+      transition: opacity 0.15s;
+    }
+
+    .notify-link:hover {
+      opacity: 1;
+    }
+
+    /* ── CONTRIBUTORS SECTION ─────────────────────────────── */
+    .contributors-section {
+      border-bottom: var(--border);
+    }
+
+    /* Static contributor row (< 5 contributors) */
+    .contributors-static {
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .contributors-label {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      opacity: 0.35;
+      flex-shrink: 0;
+    }
+
+    .contributor-tag {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.2em 0.55em;
+      border: 2px solid rgba(240, 236, 227, 0.2);
+    }
+
+    /* ── BACK LINK ────────────────────────────────────────── */
+    .back-section {
+      padding: 1.5rem;
+      border-bottom: var(--border);
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--paper);
+      text-decoration: none;
+      opacity: 0.4;
+      transition: opacity 0.15s;
+    }
+
+    .back-link:hover {
+      opacity: 1;
+    }
+
+    .back-arrow {
+      display: inline-block;
+      transition: transform 0.15s;
+    }
+
+    .back-link:hover .back-arrow {
+      transform: translateX(-4px);
+    }
+
+    /* ── MOBILE ───────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .page-hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .hero-image-wrap {
+        border-right: none;
+        border-bottom: var(--border);
+        aspect-ratio: 4 / 3;
+      }
+
+      .hero-meta {
+        padding: 1.5rem 1rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      :root {
+        --border: 3px solid var(--ink-black);
+      }
+
+      body {
+        border-width: 3px;
+      }
+
+      .breadcrumb {
+        padding: 0.6rem 1rem;
+      }
+
+      .contributors-static {
+        padding: 0.875rem 1rem;
+      }
+
+      .back-section {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <Nav currentPath={currentPath} />
+
+  <!-- BREADCRUMB -->
+  <div class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep" aria-hidden="true">/</span>
+    <a href="/zines">Catalog</a>
+    <span class="breadcrumb-sep" aria-hidden="true">/</span>
+    <span class="breadcrumb-current">{title}</span>
+  </div>
+
+  <!-- HERO -->
+  <section class="page-hero">
+
+    <!-- IMAGE -->
+    <div class:list={["hero-image-wrap", { oop: isOutOfPrint }]}>
+      <img
+        src={image}
+        alt={`Cover of ${title}`}
+        class="hero-image"
+        loading="eager"
+        decoding="async"
+      />
+      {isOutOfPrint && (
+        <div class="sold-out-stamp" aria-hidden="true">
+          <span class="sold-out-text">SOLD OUT</span>
+        </div>
+      )}
+    </div>
+
+    <!-- META -->
+    <div class="hero-meta">
+
+      <div class="meta-top">
+        <span class="catalog-number">{catalog_number}</span>
+        <h1 class="zine-title">{title}</h1>
+        {isAvailable && (
+          <span class="status-badge available">
+            <span aria-hidden="true">●</span> Available
+          </span>
+        )}
+        {isLowStock && (
+          <span class="status-badge low-stock">
+            <span aria-hidden="true">⚠</span> Low Stock
+          </span>
+        )}
+        {isOutOfPrint && (
+          <span class="status-badge out-of-print">
+            Out of Print
+          </span>
+        )}
+      </div>
+
+      <!-- SPEC TABLE -->
+      <div class="spec-table">
+        <div class="spec-row">
+          <span class="spec-key">Specs</span>
+          <span class="spec-val">{specs}</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">Released</span>
+          <span class="spec-val">{formattedDate}</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">Contributors</span>
+          <span class="spec-val">{contributors.length}</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">Catalog No.</span>
+          <span class="spec-val">{catalog_number}</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">Status</span>
+          <span class="spec-val">{status}</span>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="cta-block">
+        {isOutOfPrint ? (
+          <>
+            <span class:list={["cta-btn", "oop"]} aria-disabled="true">
+              <span>UNAVAILABLE</span>
+              <span class="cta-arrow" aria-hidden="true">×</span>
+            </span>
+            <a href="/contact" class="notify-link">
+              Request notification if reprinted →
+            </a>
+          </>
+        ) : (
+          <a href="/contact" class="cta-btn">
+            <span>{isLowStock ? "ORDER NOW — LOW STOCK" : "ORDER THIS PUBLICATION"}</span>
+            <span class="cta-arrow" aria-hidden="true">→</span>
+          </a>
+        )}
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CONTRIBUTORS — marquee if 5+, static if fewer -->
+  <div class="contributors-section">
+    {useMarquee ? (
+      <Marquee
+        items={contributorNames}
+        speed={20}
+        separator=" / "
+        invert={false}
+      />
+    ) : (
+      <div class="contributors-static">
+        <span class="contributors-label">Contributors</span>
+        {contributorNames.map(name => (
+          <span class="contributor-tag">{name}</span>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <!-- BACK TO CATALOG -->
+  <div class="back-section">
+    <a href="/zines" class="back-link">
+      <span class="back-arrow" aria-hidden="true">←</span>
+      Back to Catalog
+    </a>
+  </div>
+
+  <!-- FOOTER -->
+  <Footer />
+
+</body>
+</html>

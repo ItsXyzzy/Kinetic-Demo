@@ -1,0 +1,613 @@
+---
+// KINETIC PRINT LAB — TRANSMISSION TERMINAL
+// src/pages/contact.astro
+
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+const currentPath = Astro.url.pathname;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CONTACT — KINETIC PRINT LAB</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── RESET & BASE ─────────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --ink-black:   #0a0a0a;
+      --paper:       #f0ece3;
+      --fluro-pink:  #ff3c96;
+      --toxic-green: #b8ff00;
+      --border:      6px solid var(--ink-black);
+      --border-thin: 3px solid var(--ink-black);
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-mono:    'JetBrains Mono', monospace;
+    }
+
+    html {
+      background: var(--ink-black);
+      color: var(--paper);
+      font-family: var(--font-mono);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      border: var(--border);
+    }
+
+    /* ── PAGE LAYOUT ──────────────────────────────────────── */
+    .page-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ── LEFT PANEL ───────────────────────────────────────── */
+    .left-panel {
+      border-right: var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-header {
+      padding: 2.5rem 1.5rem 2rem;
+      border-bottom: var(--border);
+    }
+
+    .page-subtitle {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.4;
+      margin-bottom: 0.6rem;
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 6vw, 6rem);
+      line-height: 0.9;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── DIRECTIVE BLOCK ──────────────────────────────────── */
+    .directive {
+      padding: 2rem 1.5rem;
+      border-bottom: var(--border);
+      background: var(--paper);
+      color: var(--ink-black);
+      flex: 1;
+    }
+
+    .directive-header {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 3px solid var(--ink-black);
+      opacity: 0.5;
+    }
+
+    .directive-rules {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .directive-rule {
+      display: grid;
+      grid-template-columns: 2rem 1fr;
+      gap: 0.75rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(10, 10, 10, 0.1);
+      align-items: start;
+    }
+
+    .directive-rule:last-child {
+      border-bottom: none;
+    }
+
+    .rule-num {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      line-height: 1;
+      opacity: 0.2;
+    }
+
+    .rule-text {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      line-height: 1.6;
+      text-transform: uppercase;
+    }
+
+    /* ── CHANNEL INFO ─────────────────────────────────────── */
+    .channel-info {
+      padding: 1.5rem;
+      border-top: var(--border);
+      margin-top: auto;
+    }
+
+    .channel-label {
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.4;
+      margin-bottom: 0.75rem;
+    }
+
+    .channel-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.65rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(240, 236, 227, 0.08);
+    }
+
+    .channel-row:last-child {
+      border-bottom: none;
+    }
+
+    .channel-key {
+      opacity: 0.4;
+      letter-spacing: 0.08em;
+    }
+
+    .channel-val {
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── RIGHT PANEL — FORM ───────────────────────────────── */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-header {
+      padding: 2.5rem 1.5rem 2rem;
+      border-bottom: var(--border);
+    }
+
+    .form-eyebrow {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.4;
+      margin-bottom: 0.6rem;
+    }
+
+    .form-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3vw, 3rem);
+      line-height: 1;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── THE FORM ─────────────────────────────────────────── */
+    .transmission-form {
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      flex: 1;
+    }
+
+    .field-group {
+      border-bottom: var(--border);
+      padding-bottom: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .field-group:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.45;
+      margin-bottom: 0.6rem;
+    }
+
+    .field-input,
+    .field-textarea {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid rgba(240, 236, 227, 0.2);
+      color: var(--paper);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      padding: 0.5rem 0;
+      outline: none;
+      transition: border-color 0.15s;
+      caret-color: var(--fluro-pink);
+    }
+
+    .field-input::placeholder,
+    .field-textarea::placeholder {
+      opacity: 0.2;
+      font-style: normal;
+    }
+
+    .field-input:focus,
+    .field-textarea:focus {
+      border-bottom-color: var(--fluro-pink);
+    }
+
+    .field-textarea {
+      resize: none;
+      min-height: 160px;
+      line-height: 1.7;
+    }
+
+    .word-count {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.4rem;
+      font-size: 0.58rem;
+      opacity: 0.3;
+      letter-spacing: 0.1em;
+      transition: color 0.15s;
+    }
+
+    .word-count.over {
+      color: var(--fluro-pink);
+      opacity: 1;
+    }
+
+    /* ── SUBMIT ───────────────────────────────────────────── */
+    .submit-wrap {
+      margin-top: auto;
+      padding-top: 1.5rem;
+    }
+
+    .submit-btn {
+      width: 100%;
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: var(--paper);
+      color: var(--ink-black);
+      border: var(--border);
+      padding: 1.1rem 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.15s, color 0.15s;
+      gap: 1rem;
+    }
+
+    .submit-btn:hover {
+      background: var(--fluro-pink);
+      border-color: var(--fluro-pink);
+      color: var(--ink-black);
+    }
+
+    .submit-btn:hover .submit-arrow {
+      transform: translateX(6px);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .submit-btn:disabled:hover {
+      background: var(--paper);
+      border-color: var(--paper);
+    }
+
+    .submit-arrow {
+      display: inline-block;
+      transition: transform 0.15s;
+      flex-shrink: 0;
+    }
+
+    /* ── SUCCESS STATE ────────────────────────────────────── */
+    .success-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 3rem 1.5rem;
+      text-align: center;
+      gap: 1rem;
+    }
+
+    .success-state.visible {
+      display: flex;
+    }
+
+    .transmission-form.hidden {
+      display: none;
+    }
+
+    .success-icon {
+      font-family: var(--font-display);
+      font-size: 5rem;
+      color: var(--toxic-green);
+      line-height: 1;
+    }
+
+    .success-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      line-height: 1;
+    }
+
+    .success-sub {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.45;
+      max-width: 30ch;
+      line-height: 1.6;
+    }
+
+    /* ── MOBILE ───────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .page-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .left-panel {
+        border-right: none;
+        border-bottom: var(--border);
+      }
+
+      .channel-info {
+        border-top: var(--border);
+      }
+    }
+
+    @media (max-width: 768px) {
+      :root {
+        --border: 3px solid var(--ink-black);
+      }
+
+      body {
+        border-width: 3px;
+      }
+
+      .page-header,
+      .form-header {
+        padding: 1.5rem 1rem 1.25rem;
+      }
+
+      .directive {
+        padding: 1.5rem 1rem;
+      }
+
+      .transmission-form {
+        padding: 1.5rem 1rem;
+      }
+
+      .channel-info {
+        padding: 1.25rem 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <Nav currentPath={currentPath} />
+
+  <!-- TWO COLUMN LAYOUT -->
+  <div class="page-grid">
+
+    <!-- LEFT: CONTEXT -->
+    <aside class="left-panel">
+
+      <div class="page-header">
+        <p class="page-subtitle">Transmission Terminal</p>
+        <h1 class="page-title">INITIATE RE-ROUTING REQUEST</h1>
+      </div>
+
+      <div class="directive">
+        <p class="directive-header">READ BEFORE SUBMITTING DATA</p>
+        <ol class="directive-rules" role="list">
+          <li class="directive-rule">
+            <span class="rule-num" aria-hidden="true">1</span>
+            <span class="rule-text">Submissions must be sent as a single PDF link. No file attachments.</span>
+          </li>
+          <li class="directive-rule">
+            <span class="rule-num" aria-hidden="true">2</span>
+            <span class="rule-text">We do not publish digital-first work. Physical print intent is mandatory.</span>
+          </li>
+          <li class="directive-rule">
+            <span class="rule-num" aria-hidden="true">3</span>
+            <span class="rule-text">Unexpected samples sent to the Dublin Lab will be recycled without review.</span>
+          </li>
+        </ol>
+      </div>
+
+      <div class="channel-info">
+        <p class="channel-label">Channel Info</p>
+        <div class="channel-row">
+          <span class="channel-key">LOCATION</span>
+          <span class="channel-val">DUBLIN, IE</span>
+        </div>
+        <div class="channel-row">
+          <span class="channel-key">RESPONSE TIME</span>
+          <span class="channel-val">14 — 21 DAYS</span>
+        </div>
+        <div class="channel-row">
+          <span class="channel-key">FORMAT</span>
+          <span class="channel-val">PDF LINK ONLY</span>
+        </div>
+        <div class="channel-row">
+          <span class="channel-key">COLD CALLS</span>
+          <span class="channel-val">NOT ACCEPTED</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- RIGHT: FORM -->
+    <div class="right-panel">
+
+      <div class="form-header">
+        <p class="form-eyebrow">Transmission Vector</p>
+        <h2 class="form-title">SUBMIT YOUR DATA PACKET</h2>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div class="success-state" id="success-state" role="status" aria-live="polite">
+        <span class="success-icon" aria-hidden="true">✓</span>
+        <h3 class="success-title">PACKET RECEIVED</h3>
+        <p class="success-sub">Transmission logged. We will respond within 14 — 21 days if your work is a fit.</p>
+      </div>
+
+      <!-- FORM -->
+      <form
+        class="transmission-form"
+        id="transmission-form"
+        novalidate
+      >
+
+        <div class="field-group">
+          <label class="field-label" for="transmitter-name">
+            LABEL: TRANSMITTER NAME
+          </label>
+          <input
+            class="field-input"
+            type="text"
+            id="transmitter-name"
+            name="name"
+            placeholder="Your full name"
+            autocomplete="name"
+            required
+          />
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="digital-vector">
+            LABEL: DIGITAL VECTOR
+          </label>
+          <input
+            class="field-input"
+            type="email"
+            id="digital-vector"
+            name="email"
+            placeholder="your@email.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="project-brief">
+            LABEL: PROJECT BRIEF [MAX 500 WORDS]
+          </label>
+          <textarea
+            class="field-textarea"
+            id="project-brief"
+            name="brief"
+            placeholder="Describe your project. Include a PDF link."
+            required
+          ></textarea>
+          <div class="word-count" id="word-count" aria-live="polite">
+            <span id="word-count-val">0</span>&nbsp;/ 500 WORDS
+          </div>
+        </div>
+
+        <div class="submit-wrap">
+          <button class="submit-btn" type="submit" id="submit-btn">
+            <span>LAUNCH DATA PACKET</span>
+            <span class="submit-arrow" aria-hidden="true">→</span>
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <Footer />
+
+</body>
+
+<script>
+  const form        = document.getElementById('transmission-form') as HTMLFormElement;
+  const textarea    = document.getElementById('project-brief') as HTMLTextAreaElement;
+  const countVal    = document.getElementById('word-count-val') as HTMLElement;
+  const countWrap   = document.getElementById('word-count') as HTMLElement;
+  const submitBtn   = document.getElementById('submit-btn') as HTMLButtonElement;
+  const successState = document.getElementById('success-state') as HTMLElement;
+
+  const MAX_WORDS = 500;
+
+  function getWordCount(text: string): number {
+    return text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+  }
+
+  // Live word count
+  textarea?.addEventListener('input', () => {
+    const count = getWordCount(textarea.value);
+    countVal.textContent = String(count);
+    const over = count > MAX_WORDS;
+    countWrap.classList.toggle('over', over);
+    submitBtn.disabled = over;
+  });
+
+  // Form submission — swap to success state
+  // Wire up to your actual form handler (Netlify, Formspree, etc.) as needed
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const name   = (form.elements.namedItem('name') as HTMLInputElement).value.trim();
+    const email  = (form.elements.namedItem('email') as HTMLInputElement).value.trim();
+    const brief  = textarea.value.trim();
+    const words  = getWordCount(brief);
+
+    // Basic validation
+    if (!name || !email || !brief) return;
+    if (words > MAX_WORDS) return;
+
+    // Swap UI
+    form.classList.add('hidden');
+    successState.classList.add('visible');
+    submitBtn.disabled = true;
+  });
+</script>
+
+</html>

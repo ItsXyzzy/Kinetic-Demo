@@ -1,0 +1,91 @@
+---
+// KINETIC PRINT LAB — MARQUEE COMPONENT
+// src/components/Marquee.astro
+//
+// Props:
+//   items    string[]   — array of strings to scroll
+//   speed?   number     — seconds for one full loop (default: 30)
+//   separator? string   — string between items (default: " // ")
+//   invert?  boolean    — paper bg / black text (default: false)
+
+interface Props {
+  items: string[];
+  speed?: number;
+  separator?: string;
+  invert?: boolean;
+}
+
+const {
+  items,
+  speed = 30,
+  separator = " // ",
+  invert = false,
+} = Astro.props;
+
+// Duplicate items to create seamless loop
+const track = [...items, ...items];
+const joined = track.join(separator);
+---
+
+<div class:list={["marquee-wrap", { invert }]} aria-hidden="true">
+  <div class="marquee-track" style={`--marquee-speed: ${speed}s`}>
+    <span class="marquee-content">{joined}{separator}</span>
+    <span class="marquee-content" aria-hidden="true">{joined}{separator}</span>
+  </div>
+</div>
+
+<style>
+  .marquee-wrap {
+    overflow: hidden;
+    border-top: var(--border);
+    border-bottom: var(--border);
+    background: var(--ink-black);
+    color: var(--paper);
+    padding: 0.6rem 0;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .marquee-wrap.invert {
+    background: var(--paper);
+    color: var(--ink-black);
+  }
+
+  .marquee-track {
+    display: inline-flex;
+    animation: marquee-scroll var(--marquee-speed) linear infinite;
+  }
+
+  .marquee-content {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding-right: 0;
+    white-space: nowrap;
+  }
+
+  .marquee-wrap.invert .marquee-content {
+    color: var(--ink-black);
+  }
+
+  @keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track {
+      animation: none;
+    }
+
+    .marquee-content:last-child {
+      display: none;
+    }
+
+    .marquee-wrap {
+      overflow-x: auto;
+    }
+  }
+</style>

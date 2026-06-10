@@ -1,0 +1,408 @@
+---
+// KINETIC PRINT LAB — PRINT CATALOG
+// src/pages/zines/index.astro
+
+import { getCollection } from "astro:content";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import Marquee from "../../components/Marquee.astro";
+import ZineCard from "../../components/ZineCard.astro";
+
+const allZines = await getCollection("zines");
+console.log("All zines:", allZines);
+// Sort: available first, low stock second, out of print last
+const statusOrder = { "AVAILABLE": 0, "LOW STOCK": 1, "OUT OF PRINT": 2 };
+const zines = allZines.sort((a, b) => {
+  return statusOrder[a.data.status] - statusOrder[b.data.status];
+});
+
+const totalCount    = zines.length;
+const availCount    = zines.filter(z => z.data.status === "AVAILABLE").length;
+const lowStockCount = zines.filter(z => z.data.status === "LOW STOCK").length;
+const oopCount      = zines.filter(z => z.data.status === "OUT OF PRINT").length;
+
+const marqueeItems = [
+  "AVAILABLE INVENTORY",
+  "GLOBAL DISTRIBUTION ACTIVE",
+  `${totalCount} TITLES IN CATALOG`,
+  "RISOGRAPH PRESS // DUBLIN IE",
+  "LIMITED RUNS ONLY",
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CATALOG — KINETIC PRINT LAB</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── RESET & BASE ─────────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --ink-black:   #0a0a0a;
+      --paper:       #f0ece3;
+      --fluro-pink:  #ff3c96;
+      --toxic-green: #b8ff00;
+      --border:      6px solid var(--ink-black);
+      --border-thin: 3px solid var(--ink-black);
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-mono:    'JetBrains Mono', monospace;
+    }
+
+    html {
+      background: var(--ink-black);
+      color: var(--paper);
+      font-family: var(--font-mono);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      border: var(--border);
+    }
+
+    /* ── STICKY MARQUEE HEADER ────────────────────────────── */
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--ink-black);
+    }
+
+    /* ── PAGE HEADER ──────────────────────────────────────── */
+    .page-header {
+      padding: 2.5rem 1.5rem 2rem;
+      border-bottom: var(--border);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: clamp(3.5rem, 10vw, 8rem);
+      line-height: 0.9;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── INVENTORY STATS ──────────────────────────────────── */
+    .inventory-stats {
+      display: flex;
+      gap: 0;
+      border: var(--border);
+      flex-shrink: 0;
+    }
+
+    .stat-block {
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      border-right: var(--border);
+    }
+
+    .stat-block:last-child {
+      border-right: none;
+    }
+
+    .stat-label {
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.4;
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .stat-value.green { color: var(--toxic-green); }
+    .stat-value.yellow { color: #ffcc00; }
+    .stat-value.dim { opacity: 0.3; }
+
+    /* ── FILTER BAR ───────────────────────────────────────── */
+    .filter-bar {
+      padding: 0.75rem 1.5rem;
+      border-bottom: var(--border);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.4;
+      flex-shrink: 0;
+    }
+
+    .filter-btns {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.3em 0.7em;
+      border: 2px solid rgba(240, 236, 227, 0.2);
+      background: transparent;
+      color: var(--paper);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      border-color: var(--paper);
+      background: var(--paper);
+      color: var(--ink-black);
+    }
+
+    .filter-btn[data-filter="LOW STOCK"].active {
+      background: #ffcc00;
+      border-color: #ffcc00;
+      color: var(--ink-black);
+    }
+
+    .filter-btn[data-filter="AVAILABLE"].active {
+      background: var(--toxic-green);
+      border-color: var(--toxic-green);
+      color: var(--ink-black);
+    }
+
+    /* ── CATALOG GRID ─────────────────────────────────────── */
+    .catalog-section {
+      flex: 1;
+      padding: 1.5rem;
+    }
+
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 0;
+    }
+
+    /* Bordered grid cells */
+    .catalog-grid > * {
+      border-right: var(--border);
+      border-bottom: var(--border);
+    }
+
+    /* Remove right border on last in each row — JS handles this dynamically,
+       so we use a CSS trick: remove right border, add left on all, then override */
+    .catalog-grid > *:nth-child(3n) {
+      border-right: var(--border);
+    }
+
+    /* ── EMPTY STATE ──────────────────────────────────────── */
+    .empty-state {
+      grid-column: 1 / -1;
+      padding: 4rem 2rem;
+      text-align: center;
+      display: none;
+    }
+
+    .empty-state.visible {
+      display: block;
+    }
+
+    .empty-title {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      opacity: 0.2;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-sub {
+      font-size: 0.7rem;
+      opacity: 0.3;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── HIDDEN CARD STATE (for filter) ───────────────────── */
+    .zine-card-wrap[hidden] {
+      display: none;
+    }
+
+    /* ── MOBILE ───────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      :root {
+        --border: 3px solid var(--ink-black);
+      }
+
+      body {
+        border-width: 3px;
+      }
+
+      .page-header {
+        padding: 1.5rem 1rem 1.25rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.25rem;
+      }
+
+      .inventory-stats {
+        width: 100%;
+      }
+
+      .stat-block {
+        flex: 1;
+        padding: 0.6rem 0.75rem;
+      }
+
+      .catalog-section {
+        padding: 1rem;
+      }
+
+      .catalog-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      }
+
+      .filter-bar {
+        padding: 0.6rem 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .catalog-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .page-header {
+        padding: 1.25rem 1rem 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <Nav currentPath={currentPath} />
+
+  <!-- STICKY MARQUEE -->
+  <div class="sticky-header">
+    <Marquee items={marqueeItems} speed={25} />
+  </div>
+
+  <!-- PAGE HEADER -->
+  <header class="page-header">
+    <h1 class="page-title">THE ARCHIVE</h1>
+
+    <div class="inventory-stats" role="status" aria-label="Inventory summary">
+      <div class="stat-block">
+        <span class="stat-label">Total</span>
+        <span class="stat-value">{totalCount}</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-label">Available</span>
+        <span class="stat-value green">{availCount}</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-label">Low Stock</span>
+        <span class="stat-value yellow">{lowStockCount}</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-label">Out of Print</span>
+        <span class="stat-value dim">{oopCount}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <span class="filter-label">Filter:</span>
+    <div class="filter-btns" role="group" aria-label="Filter by status">
+      <button class="filter-btn active" data-filter="ALL">All</button>
+      <button class="filter-btn" data-filter="AVAILABLE">Available</button>
+      <button class="filter-btn" data-filter="LOW STOCK">Low Stock</button>
+      <button class="filter-btn" data-filter="OUT OF PRINT">Out of Print</button>
+    </div>
+  </div>
+
+  <!-- CATALOG GRID -->
+  <main class="catalog-section">
+    <div class="catalog-grid" id="catalog-grid">
+      {zines.map(zine => (
+        <div class="zine-card-wrap" data-status={zine.data.status}>
+          <ZineCard
+            title={zine.data.title}
+            catalog_number={zine.data.catalog_number}
+            date={zine.data.date}
+            image={zine.data.image}
+            specs={zine.data.specs}
+            status={zine.data.status}
+            contributors={zine.data.contributors.map(c => c.name)}
+            slug={zine.id}
+          />
+        </div>
+      ))}
+
+      <div class="empty-state" id="empty-state">
+        <p class="empty-title">NO RESULTS</p>
+        <p class="empty-sub">No titles match this filter</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <Footer />
+
+</body>
+
+<script>
+  const filterBtns  = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+  const cards       = document.querySelectorAll<HTMLElement>('.zine-card-wrap');
+  const emptyState  = document.getElementById('empty-state') as HTMLElement;
+
+  function applyFilter(filter: string) {
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const status = card.dataset.status ?? "";
+      const show   = filter === "ALL" || status === filter;
+      card.hidden  = !show;
+      if (show) visibleCount++;
+    });
+
+    emptyState.classList.toggle('visible', visibleCount === 0);
+  }
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applyFilter(btn.dataset.filter ?? "ALL");
+    });
+  });
+</script>
+</html>

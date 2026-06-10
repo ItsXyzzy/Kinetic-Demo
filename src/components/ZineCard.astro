@@ -1,0 +1,316 @@
+---
+// KINETIC PRINT LAB — ZINE CARD COMPONENT
+// src/components/ZineCard.astro
+
+interface Props {
+  title: string;
+  catalog_number: string;
+  date: Date;
+  image: string;
+  specs: string;
+  status: "AVAILABLE" | "LOW STOCK" | "OUT OF PRINT";
+  contributors: { name: string }[]; // Updated to match your object array schema
+  slug: string;
+}
+
+const {
+  title,
+  catalog_number,
+  date,
+  image,
+  specs,
+  status,
+  contributors,
+  slug,
+} = Astro.props;
+
+// Extract just the strings from the object array
+const names = contributors.map(c => c.name);
+
+const isOutOfPrint = status === "OUT OF PRINT";
+const isLowStock   = status === "LOW STOCK";
+const isAvailable  = status === "AVAILABLE";
+
+const formattedDate = new Date(date).toLocaleDateString("en-IE", {
+  year:  "numeric",
+  month: "short",
+  day:   "numeric",
+});
+---
+
+<a
+  href={`/zines/${slug}`}
+  class:list={["zine-card", { "out-of-print": isOutOfPrint }]}
+  aria-label={`${title} — ${status}`}
+>
+  <!-- IMAGE -->
+  <div class="card-image-wrap">
+    <img
+      src={image}
+      alt={`Cover of ${title}`}
+      class="card-image"
+      loading="lazy"
+      decoding="async"
+    />
+    {isOutOfPrint && (
+      <div class="sold-out-overlay" aria-hidden="true">
+        <span class="sold-out-text">SOLD OUT</span>
+      </div>
+    )}
+  </div>
+
+  <!-- BODY -->
+  <div class="card-body">
+
+    <div class="card-header">
+      <span class="catalog-number">{catalog_number}</span>
+      {isLowStock && (
+        <span class="hazard-label" aria-label="Low stock warning">
+          ⚠ LOW STOCK
+        </span>
+      )}
+      {isAvailable && (
+        <span class="status-available">AVAILABLE</span>
+      )}
+      {isOutOfPrint && (
+        <span class="status-oop">OUT OF PRINT</span>
+      )}
+    </div>
+
+    <h2 class="card-title">{title}</h2>
+
+    <p class="card-specs">{specs.toUpperCase()}</p>
+
+    <div class="card-footer">
+      <span class="card-date">{formattedDate}</span>
+      <span class="card-contributors">
+        <!-- 🚨 Updated this to use the extracted 'names' array -->
+        {names.slice(0, 2).join(" / ")}
+        {names.length > 2 && ` +${names.length - 2}`}
+      </span>
+    </div>
+
+  </div>
+</a>
+
+<style>
+  /* ── CARD BASE ────────────────────────────────────────── */
+  .zine-card {
+    display: flex;
+    flex-direction: column;
+    border: var(--border);
+    background: var(--ink-black);
+    color: var(--paper);
+    text-decoration: none;
+    position: relative;
+    /* Removed base transition here to handle hover/active states strictly */
+    transition: background 0.1s, color 0.1s; 
+    cursor: pointer;
+  }
+
+  /* 💻 DESKTOP ONLY HOVER EFFECTS (Prevents mobile layout shift) */
+  @media (hover: hover) and (pointer: fine) {
+    .zine-card {
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .zine-card:hover {
+      transform: translate(4px, 4px);
+      box-shadow: -8px -8px 0px var(--paper);
+    }
+    .zine-card.out-of-print:hover {
+      box-shadow: -8px -8px 0px rgba(240, 236, 227, 0.3);
+    }
+  }
+
+  /* 📱 MOBILE TOUCH FEEDBACK */
+  @media (hover: none) {
+    .zine-card:active {
+      background: var(--paper);
+      color: var(--ink-black);
+    }
+    /* Invert internal opacities when background flashes white */
+    .zine-card:active .catalog-number,
+    .zine-card:active .card-specs,
+    .zine-card:active .card-date,
+    .zine-card:active .card-contributors,
+    .zine-card:active .status-oop {
+      color: var(--ink-black);
+      opacity: 0.8;
+    }
+  }
+
+  /* ── IMAGE ────────────────────────────────────────────── */
+  .card-image-wrap {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 3 / 4;
+    border-bottom: var(--border);
+    background: #1a1a1a;
+  }
+
+  .card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.2s;
+  }
+
+  .out-of-print .card-image {
+    filter: grayscale(1);
+    opacity: 0.45;
+  }
+
+  /* ── SOLD OUT OVERLAY ─────────────────────────────────── */
+  .sold-out-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .sold-out-text {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    color: var(--paper);
+    transform: rotate(-28deg);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+
+    -webkit-text-stroke: 2px var(--paper);
+    paint-order: stroke fill;
+    opacity: 0.9;
+  }
+
+  /* ── CARD BODY ────────────────────────────────────────── */
+  .card-body {
+    padding: 1rem 1.1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+  }
+
+  /* ── CARD HEADER ROW ──────────────────────────────────── */
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .catalog-number {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    opacity: 0.45;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  /* ── STATUS BADGES ────────────────────────────────────── */
+  .hazard-label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: #ffcc00;
+    color: var(--ink-black);
+    padding: 0.15em 0.4em;
+    white-space: nowrap;
+  }
+
+  .status-available {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--toxic-green);
+    white-space: nowrap;
+  }
+
+  .status-oop {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.35;
+    white-space: nowrap;
+  }
+
+  /* ── TITLE ────────────────────────────────────────────── */
+  .card-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 6vw, 1.8rem);
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    
+    /* 🛡️ Prevents large words from breaking the viewport */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  .out-of-print .card-title {
+    opacity: 0.5;
+  }
+
+  /* ── SPECS ────────────────────────────────────────────── */
+  .card-specs {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    line-height: 1.5;
+    opacity: 0.55;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── FOOTER ROW ───────────────────────────────────────── */
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(128, 128, 128, 0.2);
+    flex-wrap: wrap;
+  }
+
+  .card-date {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    opacity: 0.35;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .card-contributors {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    opacity: 0.45;
+    letter-spacing: 0.06em;
+    text-align: right;
+    
+    /* Adjusted for better mobile wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    min-width: 50%;
+  }
+
+  @media (max-width: 480px) {
+    .card-contributors {
+      text-align: left;
+      width: 100%;
+    }
+  }
+</style>
