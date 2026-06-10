@@ -1,11 +1,14 @@
-// @ts-check
+// astro.config.mjs
 import { defineConfig } from 'astro/config';
 
-// https://astro.build/config
 export default defineConfig({
+  // 🚨 ADD THESE TWO LINES:
+  site: 'https://itsxyzzy.github.io', 
+  base: '/Kinetic-Demo', // Note the leading slash!
+
   vite: {
     server: {
-      allowedHosts: true // Tells Vite to accept incoming connections from any public tunnel domain
+      allowedHosts: true
     }
   }
 });
